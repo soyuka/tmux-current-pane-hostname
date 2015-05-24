@@ -1,6 +1,6 @@
 # Tmux current pane hostname/user
 
-Tmux plugin that enables displaying hostname and user of the current pane.
+Tmux plugin that enables displaying hostname and user of the current pane in your status bar.
 
 Replaces the `#H` format and adds a `#U` format option.
 
@@ -26,7 +26,7 @@ Add plugin to the list of TPM plugins in `.tmux.conf`:
 
 Hit `prefix + I` to fetch the plugin and source it.
 
-`#U@#H}` interpolation should now take the current pane ssh status in consideration.
+`#U@#H` interpolation should now take the current pane ssh status into consideration.
 
 ### Manual Installation
 
@@ -47,6 +47,13 @@ Reload TMUX environment:
 
 ### Limitations
 
+I wanted to get the current path of the opened ssh session but that's not possible. I haven't found a way to get the output of a remote command that will be executed on an opened ssh session. A dirty way would be to use `send-keys pwd Enter` but this will show on the pane and we don't want this.
+So, I'm just getting the correct ssh command corresponding to the pane job pid and parsing it, for example:
+```
+ssh test@host.com
+# #H => host.com
+# #U => test
+```
 
 ### License
 
