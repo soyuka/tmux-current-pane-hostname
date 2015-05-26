@@ -19,7 +19,7 @@ set_tmux_option() {
 
 parse_ssh_port() {
   # If there is a port get it
-  local port=$(echo $1|grep -Eo '^\-p ([0-9]+)'|sed 's/-p //')
+  local port=$(echo $1|grep -Eo '\-p ([0-9]+)'|sed 's/-p //')
 
   if [ -z $port ]; then
     local port=22
@@ -35,6 +35,8 @@ get_remote_info() {
   local cmd=$(pgrep -flP `tmux display-message -p "#{pane_pid}"` | sed -E 's/^[0-9]+ ssh //')
 
   local port=$(parse_ssh_port "$cmd")
+
+  local cmd=$(echo $cmd|sed 's/\-p '"$port"'//g')
 
   local user=$(echo $cmd | awk '{print $NF}'|cut -f1 -d@)
   local host=$(echo $cmd | awk '{print $NF}'|cut -f2 -d@)
