@@ -63,7 +63,7 @@ get_info() {
   local cmd=$(tmux display-message -p "#{pane_current_command}")
 
   # If command is ssh do some magic
-  if [ $cmd = "ssh" ]; then
+  if [ $cmd = "ssh" ] || [ $cmd = "sshpass" ]; then
     echo $(get_remote_info $1)
   else
     echo $($1)
