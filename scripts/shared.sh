@@ -32,7 +32,7 @@ get_remote_info() {
   local command=$1
 
   # First get the current pane command pid to get the full command with arguments
-  local cmd=$(pgrep -flP `tmux display-message -p "#{pane_pid}"` | sed -E 's/^[0-9]+ ssh //')
+  local cmd=$(pgrep -flaP `tmux display-message -p "#{pane_pid}"` | sed -E 's/^[0-9]+ ssh //')
 
   local port=$(parse_ssh_port "$cmd")
 
