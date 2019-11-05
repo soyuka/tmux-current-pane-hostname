@@ -6,23 +6,22 @@ better_hostname="#($CURRENT_DIR/scripts/better_hostname.sh)"
 better_user="#($CURRENT_DIR/scripts/better_user.sh)"
 better_path="#($CURRENT_DIR/scripts/better_path.sh)"
 
-interpolation=('\#H' '\#U' '\#\{pane_ssh_connected\}')
-script=("#($CURRENT_DIR/scripts/hostname.sh)" "#($CURRENT_DIR/scripts/whoami.sh)" "#($CURRENT_DIR/scripts/pane_ssh_connected.sh)")
+interpolation=('\#H' '\#U' '\#\{pane_ssh_port\}' '\#\{pane_ssh_connected\}')
+script=("#($CURRENT_DIR/scripts/hostname.sh)" "#($CURRENT_DIR/scripts/whoami.sh)" "#($CURRENT_DIR/scripts/port.sh)" "#($CURRENT_DIR/scripts/pane_ssh_connected.sh)")
 
 
 source $CURRENT_DIR/scripts/shared.sh
 
 do_interpolation() {
-        local interpolated=$1
-        local j=0
+    local interpolated=$1
+    local j=0
 
-        for i in "${interpolation[@]}"; do
-          local s=${script[$j]}
-          local interpolated=${interpolated/$i/$s}
-          ((j+=1))
-        done
-
-	echo "$interpolated"
+    for i in "${interpolation[@]}"; do
+        local s=${script[$j]}
+        local interpolated=${interpolated//$i/$s}
+        ((j+=1))
+    done
+    echo "$interpolated"
 }
 
 update_tmux_option() {
