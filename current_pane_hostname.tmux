@@ -2,8 +2,8 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-interpolation=('\#H' '\#U' '\#\{pane_ssh_port\}' '\#\{pane_ssh_connected\}')
-script=("#($CURRENT_DIR/scripts/hostname.sh)" "#($CURRENT_DIR/scripts/whoami.sh)" "#($CURRENT_DIR/scripts/port.sh)" "#($CURRENT_DIR/scripts/pane_ssh_connected.sh)")
+interpolation=('\#H' '\#{hostname_short}' '\#U' '\#\{pane_ssh_port\}' '\#\{pane_ssh_connected\}')
+script=("#($CURRENT_DIR/scripts/hostname.sh)" "#($CURRENT_DIR/scripts/hostname_short.sh)" "#($CURRENT_DIR/scripts/whoami.sh)" "#($CURRENT_DIR/scripts/port.sh)" "#($CURRENT_DIR/scripts/pane_ssh_connected.sh)")
 
 
 source $CURRENT_DIR/scripts/shared.sh
