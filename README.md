@@ -10,7 +10,7 @@ Replaces the `#H` format and adds a `#U` format option.
 - `#{hostname_short}` will be the short hostname of your current path (up to the first dot). If there is an ssh session opened, the ssh hostname will show instead of the local one.
 - `#U` will show the `whoami` result or the user that logged in an ssh session.
 - `#{pane_ssh_port}` if an open ssh session will show the connection port, otherwise it will be empty.
-- `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active ssh connection. (Useful for `#{?#{pane_ssh_connection},ssh,no-ssh}` which will evaluate to `ssh` if there is an active ssh in the currently selected pane and `no-ssh` otherwise.)
+- `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active ssh connection. (Useful for `#{?#{pane_ssh_connected},ssh,no-ssh}` which will evaluate to `ssh` if there is an active ssh in the currently selected pane and `no-ssh` otherwise.)
 
 Here's the example in `.tmux.conf`:
 
