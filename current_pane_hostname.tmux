@@ -2,22 +2,31 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-interpolation=('\#H' '\#{hostname_short}' '\#U' '\#\{pane_ssh_port\}' '\#\{pane_ssh_connected\}')
-script=("#($CURRENT_DIR/scripts/hostname.sh)" "#($CURRENT_DIR/scripts/hostname_short.sh)" "#($CURRENT_DIR/scripts/whoami.sh)" "#($CURRENT_DIR/scripts/port.sh)" "#($CURRENT_DIR/scripts/pane_ssh_connected.sh)")
+# Create map placeholders to handle scripts
+# to provide one handler for multiple placeholders.
+# Use '//' as separator, due to unix limitation in filenames
+placeholders_to_scripts=(
+	"\#U//#($CURRENT_DIR/scripts/user.sh)"
+	"\#\{username\}//#($CURRENT_DIR/scripts/user.sh)"
+	"\#H//#($CURRENT_DIR/scripts/host.sh)"
+	"\#\{hostname\}//#($CURRENT_DIR/scripts/host.sh)"
+	"\#\{hostname_short\}//#($CURRENT_DIR/scripts/host_short.sh)"
+	"\#\{pane_ssh_port\}//#($CURRENT_DIR/scripts/port.sh)"
+	"\#\{pane_ssh_connected\}//#($CURRENT_DIR/scripts/pane_ssh_connected.sh)"
+	"\#\{pane_ssh_connect\}//#($CURRENT_DIR/scripts/pane_ssh_connect.sh)")
 
 
 source $CURRENT_DIR/scripts/shared.sh
 
 do_interpolation() {
-    local interpolated=$1
-    local j=0
-
-    for i in "${interpolation[@]}"; do
-        local s=${script[$j]}
-        local interpolated=${interpolated//$i/$s}
-        ((j+=1))
-    done
-    echo "$interpolated"
+	local interpolated=$1
+	for assignment in ${placeholders_to_scripts[@]}; do
+		# ${assignment%\/\/*} - remove from // til EOL
+		# ${assignment#*\/\/} - remove from BOL til //
+		# ${interpolated//A/B} - replace all occurrences of A in interpolated with B
+		local interpolated=${interpolated//${assignment%\/\/*}/${assignment#*\/\/}}
+	done
+	echo "$interpolated"
 }
 
 update_tmux_option() {
