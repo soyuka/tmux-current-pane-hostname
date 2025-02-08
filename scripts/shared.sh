@@ -17,7 +17,7 @@ get_remote_info() {
 	# First get the current pane command pid to get the full command with arguments
 	local cmd=$(_current_pane_command | grep -E 'ssh' | sed -E 's/^[0-9]*[[:blank:]]*ssh //')
 	# Fetch configuration with given cmd
-	ssh -G $cmd 2>/dev/null | grep -E -e '^host\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
+	ssh -G $cmd 2>/dev/null | grep -E -e '^hostname\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
 }
 
 get_container_info() {
@@ -84,9 +84,9 @@ containered() {
 
 _current_pane_command() {
 	local pane_pid=$(tmux display-message -p "#{pane_pid}")
+	local pane_process_pid=$(pgrep -flaP $pane_pid | cut -f 1 -d ' ')
 
-	# @TODO research, maybe `pgrep -flaP $pane_pid` is enough
-	{ pgrep -flaP $pane_pid; ps -o command -p $pane_pid; } | xargs -I{} echo {}
+	ps -o command -p $pane_process_pid | grep -v 'COMMAND'
 }
 
 _get_username() {
