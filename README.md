@@ -12,10 +12,20 @@ Replaces the `#H` format and adds a `#U` format option.
 - `#{pane_ssh_port}` if an open ssh session will show the connection port, otherwise it will be empty.
 - `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active ssh connection. (Useful for `#{?#{pane_ssh_connected},ssh,no-ssh}` which will evaluate to `ssh` if there is an active ssh in the currently selected pane and `no-ssh` otherwise.)
 
-Here's the example in `.tmux.conf`:
+Here are examples in `.tmux.conf`:
 
 ```bash
 set -g status-right '#[fg=cyan,bold] #U@#H #[default]#[fg=blue]#(tmux display-message -p "#{pane_current_path}" | sed "s#$HOME#~#g") #[fg=red]%H:%M %d-%b-%y#[default]'
+```
+
+```bash
+set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_green}] #{?#{pane_ssh_connected},#[fg=#{@thm_red}]  #{hostname_short} ,  #{pane_current_command}}" #changes the current process for the remote hostname if connected (and the color)
+
+set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{?#{pane_ssh_connected}, , #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} |}" #shows the local path only if not connected
+
+set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #{?#{pane_ssh_connected},, #{pane_current_path}} " #shows the current full path only if not connected
+
+set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #{?#{pane_ssh_connected},#[fg=#{@thm_red}]  #U ,#[fg=#{@thm_blue}]  #U }" #shows the current or remote user, different colors for awareness
 ```
 
 ### Installation with [Tmux Plugin Manager](https://github.com/tmux-plugins/tpm) (recommended)
