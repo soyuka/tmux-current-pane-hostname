@@ -90,8 +90,8 @@ get_remote_ssh() {
 }
 
 get_remote_gcloud() {
-  #  local command=$1
-  local parent=$(pgrep -P $(tmux display-message -p "#{pane_pid}"))
+  local pane_pid=$(tmux display-message -p "#{pane_pid}")
+  local parent=$(pgrep -P $pane_pid)
   local grandparent=$(pgrep -P $parent)           # user
   local greatgrandparent=$(pgrep -P $grandparent) #port and host
 
@@ -116,7 +116,31 @@ get_remote_gcloud() {
 }
 
 get_remote_mosh() {
-  echo "$user@$host:$port"
+  local pane_pid=$(tmux display-message -p "#{pane_pid}")
+  local parent=$(pgrep -P $pane_pid)
+
+  local user=$(ps -o command -p $parent | awk '{print $3}' | cut -f1 -d@)
+  local host=$(ps -o command -p $parent | awk '{print $3}' | cut -f2 -d@)
+  local port=$(ps -o command -p $parent | awk '{print $6}')
+  local ip=$(ps -o command -p $parent | awk '{print $5}')
+
+  case "$1" in
+  "whoami")
+    echo $user
+    ;;
+  "hostname")
+    echo $host
+    ;;
+  "port")
+    echo $port
+    ;;
+  "ip")
+    echo $ip
+    ;;
+  *)
+    echo "$user@$host:$port"
+    ;;
+  esac
 }
 
 get_info() {
@@ -143,5 +167,5 @@ gcloud_connected() {
 
 mosh_connected() {
   local cmd=$(tmux display-message -p "#{pane_current_command}")
-  [ $cmd = "mosh" ]
+  [ $cmd = "mosh-client" ]
 }
