@@ -4,6 +4,8 @@ Tmux plugin that enables displaying hostname and user of the current pane in you
 
 Replaces the `#H` format and adds a `#U` format option.
 
+Currently working for gcloud and mosh connections
+
 ### Usage
 
 - `#H` will be the hostname of your current path. If there is an ssh session opened, the ssh hostname will show instead of the local one.
@@ -45,7 +47,7 @@ Hit `prefix + I` to fetch the plugin and source it.
 
 Clone the repo:
 
-    $ git clone https://github.com/soyuka/tmux-current-pane-hostname ~/clone/path
+    $ git clone https://github.com/jacostag/tmux-current-pane-hostname ~/clone/path
 
 Add this line to the bottom of `.tmux.conf`:
 
