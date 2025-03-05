@@ -1,27 +1,78 @@
 #!/usr/bin/env bash
 
-get_tmux_option() {
-	local option=$1
-	local default_value=$2
-	local option_value=$(tmux show-option -gqv "$option")
-	[[ -z "$option_value" ]] && echo "$default_value" || echo "$option_value"
+get_info() {
+	local host port user
+	local cmd=$(__current_pane_command)
+	if __ssh_cmd "$cmd"; then
+		cmd=$(echo "$cmd" | grep -E 'ssh' | sed -E 's/^.*ssh //')
+		IFS=' ' read -r host port user <<<$(__get_remote_info "$cmd")
+	elif __containered_cmd "$cmd"; then
+		cmd=$(echo "$cmd" | grep -E 'docker|podman' | sed -E 's/^[[:blank:]]* //')
+		IFS=' ' read -r host user <<<$(__get_container_info "$cmd")
+	else
+		IFS=' ' read -r host user <<<$(__get_local_info)
+	fi
+	#
+	# Return requested info
+	case "$1" in
+		"user")
+			[[ -z "$user" ]] && __get_username || echo "$user"
+			;;
+		"host")
+			[[ -z "$host" ]] && __get_hostname || echo "$host"
+			;;
+		"host_short")
+			[[ -z "$host" ]] && __get_hostname_short || echo "$host"
+			;;
+		"port")
+			echo "$port"
+			;;
+		*)
+			echo "${user}#${host}#${port}"
+			;;
+	esac
 }
 
-set_tmux_option() {
-	local option=$1
-	local value=$2
-	tmux set-option -gq "$option" "$value"
+ssh_connected() {
+	local cmd=$(__current_pane_command)
+	__ssh_cmd "$cmd"
 }
 
-get_remote_info() {
-	# First get the current pane command pid to get the full command with arguments
-	local cmd=$(_current_pane_command | grep -E 'ssh' | sed -E 's/^[0-9]*[[:blank:]]*ssh //')
+containered() {
+	local cmd=$(__current_pane_command)
+	__containered_cmd "$cmd"
+}
+
+__ssh_cmd() {
+	[[ $1 =~ (^|^[[:blank:]]*|/?)ssh[[:blank:]] ]] || [[ $1 =~ (^|^[[:blank:]]*|/?)sshpass[[:blank:]] ]]
+}
+
+__containered_cmd() {
+	[[ $1 =~ (^|^[[:blank:]]*|/?)docker[[:blank:]] ]] || [[ $1 =~ (^|^[[:blank:]]*|/?)podman[[:blank:]] ]]
+}
+
+__current_pane_command() {
+	local ppid=$(tmux display-message -p "#{pane_pid}")
+	local pid command cmd
+
+	while [[ -n "$ppid" ]] ; do
+		IFS=' ' read -r ppid pid command <<<$(ps -o ppid=,pid=,command= | grep -E "^[[:blank:]]*$ppid")
+		[[ -z "$command" ]] && break
+		ppid="$pid"
+		cmd="$command"
+	done
+
+	echo "$cmd"
+}
+
+__get_remote_info() {
+	local cmd="$1"
 	# Fetch configuration with given cmd
 	ssh -G $cmd 2>/dev/null | grep -E -e '^hostname\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
 }
 
-get_container_info() {
-	local cmd=$(_current_pane_command | grep -E 'docker|podman' | sed -E 's/^[0-9]*[[:blank:]]* //')
+__get_container_info() {
+	local cmd="$1"
 
 	local runner=${cmd%% *}
 	if [[ $cmd =~ ' --name' ]]; then
@@ -30,73 +81,44 @@ get_container_info() {
 	else
 		# @TODO get dynamic named container
 		# local all_running_containers=$($runner ps -q | xargs $runner inspect)
+		__get_local_info
 		return
 	fi
 
-	local info=$($runner inspect --format '{{ .Config.Hostname }}/{{ .Config.Domainname }}/{{ .Config.User }}' $container)
+	local format
+	case $runner in
+		'docker')
+			format='{{ .Config.Hostname }}/{{ .Config.Domainname }}/{{ .Config.User }}'
+			;;
+		'podman')
+			format='{{ .Config.Hostname }}/{{ .Config.DomainName }}/{{ .Config.User }}'
+			;;
+	esac
+
+	local info=$($runner inspect --format "$format" "$container")
 	local host=$(echo $info | cut -f 1 -d '/')
 	local domain=$(echo $info | cut -f 2 -d '/')
 	local user=$(echo $info | cut -f 3 -d '/')
-	# @TODO `port` is not applicable with container for now
-	echo "${host}${domain:+.$domain} 0 ${user}"
+
+	echo "${host}${domain:+.$domain} ${user}"
 }
 
-get_info() {
-	local host port user
-	# If command is ssh, fetch connection info
-	if ssh_connected; then
-		read -r host port user <<<$(get_remote_info)
-	fi
-	if containered; then
-		read -r host port user <<<$(get_container_info)
-	fi
-	# Return requested info
-	case "$1" in
-		"user") # user from ssh info or `whoami`
-			[[ -z "$user" ]] && _get_username || echo "$user"
-			;;
-		"host") # host from ssh info or `hostname`
-			[[ -z "$host" ]] && _get_hostname || echo "$host"
-			;;
-		"host_short") # host from ssh info or `hostname -s`
-			[[ -z "$host" ]] && _get_hostname_short || echo "$host"
-			;;
-		"port") # port from ssh info or empty
-			echo "$port"
-			;;
-		*) # user from ssh info + "@host" if host is not empty + ":port" if port is not empty
-			echo "${user}${host:+@$host}${port:+:$port}"
-			;;
-	esac
+__get_local_info() {
+	local user=$(__get_username)
+	local host=$(__get_hostname)
+
+	echo "${host} ${user}"
 }
 
-ssh_connected() {
-	local cmd=$(_current_pane_command)
 
-	[[ $cmd =~ " ssh " ]] || [[ $cmd =~ " sshpass " ]]
+__get_username() {
+	command -v whoami > /dev/null && whoami
 }
 
-containered() {
-	local cmd=$(_current_pane_command)
-
-	[[ $cmd =~ " docker " ]] || [[ $cmd =~ " podman " ]]
+__get_hostname() {
+	command -v hostname > /dev/null && hostname || echo "${HOSTNAME}"
 }
 
-_current_pane_command() {
-	local pane_pid=$(tmux display-message -p "#{pane_pid}")
-	local pane_process_pid=$(pgrep -flaP $pane_pid | cut -f 1 -d ' ')
-
-	ps -o command -p $pane_process_pid | grep -v 'COMMAND'
-}
-
-_get_username() {
-	command -v whoami && whoami
-}
-
-_get_hostname() {
-	command -v hostname && hostname || echo "${HOSTNAME}"
-}
-
-_get_hostname_short() {
-	command -v hostname && hostname --short || echo "${HOSTNAME%%.*}"
+__get_hostname_short() {
+	command -v hostname > /dev/null && hostname --short || echo "${HOSTNAME%%.*}"
 }

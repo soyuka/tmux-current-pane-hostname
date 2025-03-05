@@ -16,7 +16,7 @@ placeholders_to_scripts=(
 	"\#\{pane_ssh_connect\}//#($CURRENT_DIR/scripts/pane_ssh_connect.sh)")
 
 
-source $CURRENT_DIR/scripts/shared.sh
+source $CURRENT_DIR/scripts/utils/tmux.sh
 
 do_interpolation() {
 	local interpolated=$1

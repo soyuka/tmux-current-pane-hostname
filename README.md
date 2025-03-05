@@ -2,37 +2,50 @@
 
 Tmux plugin that enables displaying hostname and user of the current pane in your status bar.
 
-Replaces the `#H` format and adds a `#U` format option.
+> [!IMPORTANT]
+> Replaces the `#H` default format variable
 
-### Usage
+## Usage
 
-- `#H` (`#{hostname}`) will be the hostname of your current path. If there is an ssh session opened, the ssh hostname will show instead of the local one.
-- `#{hostname_short}` will be the short hostname of your current path (up to the first dot). If there is an ssh session opened, the ssh hostname will show instead of the local one.
-- `#U` (`#{username}`) will show the `whoami` result or the user that logged in an ssh session.
-- `#{pane_ssh_port}` if an open ssh session will show the connection port, otherwise it will be empty.
-- `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active ssh connection. (Useful for `#{?#{pane_ssh_connected},ssh,no-ssh}` which will evaluate to `ssh` if there is an active ssh in the currently selected pane and `no-ssh` otherwise.)
-- `#{pane_ssh_connect}` if an open ssh session will show the connection info in `"username@hostname:port"` format, otherwise it will be empty.
+### Basics
 
-Here's the example in `.tmux.conf`:
+- `#H` (`#{hostname}`) will be the hostname of your current path
+- `#{hostname_short}` will be the short hostname of your current path (up to the first dot)
+- `#U` (`#{username}`) will be current user name
 
-```bash
-set -g status-right '#[fg=cyan,bold] #U@#H #[default]#[fg=blue]#(tmux display-message -p "#{pane_current_path}" | sed "s#$HOME#~#g") #[fg=red]%H:%M %d-%b-%y#[default]'
+### Remote connection info
+
+Plugin can detect pane has remote shell connection in several states:
+- ssh session inside pane
+- running docker (or podman) container
+
+In both cases, `#{hostname}` and `#{username}` with show their values relatively to that state.
+
+Besides `#{hostname}` and `#{username}` there are more usefull format variables:
+
+- `#{pane_ssh_port}` will show the connection port, otherwise it will be empty.
+- `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active connection. (Useful for `#{?#{pane_ssh_connected},ssh,no-ssh}` which will evaluate to `ssh` if there is an active remote session in the currently selected pane and `no-ssh` otherwise.)
+- `#{pane_ssh_connect}` if an open remote session exists will show the connection info in `"username@hostname:port"` format, otherwise it will be empty.
+
+### Example
+
+```tmux
+set -g status-left " #[bg=blue]#U#[bg=red]@#H#{?#{pane_ssh_port},:#{pane_ssh_port},}#[default] "
 ```
 
-### Installation with [Tmux Plugin Manager](https://github.com/tmux-plugins/tpm) (recommended)
+## Installation with [Tmux Plugin Manager](https://github.com/tmux-plugins/tpm) (recommended)
 
 Add plugin to the list of TPM plugins in `.tmux.conf`:
 
-    set -g @tpm_plugins "                 \
-      tmux-plugins/tpm                    \
-      soyuka/tmux-current-pane-hostname     \
-    "
+```tmux
+set -g @plugin "soyuka/tmux-current-pane-hostname"
+```
 
 Hit `prefix + I` to fetch the plugin and source it.
 
 `#U@#H` interpolation should now take the current pane ssh status into consideration.
 
-### Manual Installation
+## Manual Installation
 
 Clone the repo:
 
@@ -49,16 +62,14 @@ Reload TMUX environment:
 
 `#U@#H` interpolation should now work.
 
-### Limitations
+## Todo
 
-I wanted to get the current path of the opened ssh session but that's not possible. I haven't found a way to get the output of a remote command that will be executed on an opened ssh session. A dirty way would be to use `send-keys pwd Enter` but this will show on the pane and we don't want this.
-So, I'm just getting the correct ssh command corresponding to the pane job pid and parsing it, for example:
-```
-ssh test@host.com
-# #H => host.com
-# #U => test
-```
+- implement templating for `#{pane_ssh_connect}`
 
-### License
+## Limitations
+
+- only named running container may be defined, otherwise it would be ignored
+
+## License
 
 [MIT](LICENSE.md)
