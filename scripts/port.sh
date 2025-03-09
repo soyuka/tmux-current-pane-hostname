@@ -5,9 +5,7 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $CURRENT_DIR/shared.sh
 
 main() {
-  if ssh_connected; then
-      get_info "port"
-  fi
+	get_info port
 }
 
 main
