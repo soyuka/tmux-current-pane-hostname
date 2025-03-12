@@ -12,14 +12,17 @@ get_info() {
 	else
 		IFS=' ' read -r host user <<<$(__get_local_info)
 	fi
-	#
+	# Set defaults
+	user="${user:-$(__get_username)}"
+	host="${host:-$(__get_hostname)}"
+
 	# Return requested info
 	case "$1" in
 		"user")
-			[[ -z "$user" ]] && __get_username || echo "$user"
+			echo "$user"
 			;;
 		"host")
-			[[ -z "$host" ]] && __get_hostname || echo "$host"
+			echo "$host"
 			;;
 		"host_short")
 			[[ -z "$host" ]] && __get_hostname_short || echo "$host"
@@ -109,7 +112,6 @@ __get_local_info() {
 
 	echo "${host} ${user}"
 }
-
 
 __get_username() {
 	command -v whoami > /dev/null && whoami
