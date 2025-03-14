@@ -61,6 +61,9 @@ __current_pane_command() {
 	while [[ -n "$ppid" ]] ; do
 		IFS=' ' read -r ppid pid command <<<$(ps -o ppid=,pid=,command= | grep -E "^[[:blank:]]*$ppid")
 		[[ -z "$command" ]] && break
+		# @hack in case of ProxyJump, ssh spawns a new ssh connection to jump host as child process
+		# in that case, check if both parent and child processes are ssh, select parent one's cmd
+		__ssh_cmd "$cmd" && __ssh_cmd "$command" && break
 		ppid="$pid"
 		cmd="$command"
 	done
@@ -71,7 +74,7 @@ __current_pane_command() {
 __get_remote_info() {
 	local cmd="$1"
 	# Fetch configuration with given cmd
-	ssh -G $cmd 2>/dev/null | grep -E -e '^hostname\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
+	ssh -TGN $cmd 2>/dev/null | grep -E -e '^hostname\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
 }
 
 __get_container_info() {
