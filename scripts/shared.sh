@@ -74,7 +74,9 @@ __current_pane_command() {
 __get_remote_info() {
 	local cmd="$1"
 	# Fetch configuration with given cmd
-	ssh -TGN $cmd 2>/dev/null | grep -E -e '^hostname\s' -e '^port\s' -e '^user\s' | sort | cut -f 2 -d ' ' | xargs
+	# Depending of ssh version, configuration output may or may not contain `host` directive
+	# Check both `host` and `hostname` for old ssh versions compatibility and prefer `host` if exists
+	ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?\s' -e '^port\s' -e '^user\s' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
 }
 
 __get_container_info() {
