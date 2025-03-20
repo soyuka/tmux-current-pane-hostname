@@ -5,13 +5,21 @@ Tmux plugin that enables displaying hostname and user of the current pane in you
 > [!IMPORTANT]
 > Replaces the `#H` default format variable
 
-## Usage
+
+Currently working for gcloud and mosh connections
+
+### Usage
+
 
 ### Basics
+
+
+Here are examples in `.tmux.conf`:
 
 - `#H` (`#{hostname}`) will be the hostname of your current path
 - `#{hostname_short}` will be the short hostname of your current path (up to the first dot)
 - `#U` (`#{username}`) will be current user name
+
 
 ### Remote connection info
 
@@ -27,13 +35,26 @@ Besides `#{hostname}` and `#{username}` there are more usefull format variables:
 - `#{pane_ssh_connected}` will be set to 1 if the currently selected pane has an active connection. (Useful for `#{?#{pane_ssh_connected},ssh,no-ssh}` which will evaluate to `ssh` if there is an active remote session in the currently selected pane and `no-ssh` otherwise.)
 - `#{pane_ssh_connect}` if an open remote session exists will show the connection info in `"username@hostname:port"` format, otherwise it will be empty.
 
-### Example
+### Examples
 
 ```tmux
 set -g status-left " #[bg=blue]#U#[bg=red]@#H#{?#{pane_ssh_port},:#{pane_ssh_port},}#[default] "
 ```
 
+
+```bash
+set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_green}] #{?#{pane_ssh_connected},#[fg=#{@thm_red}]  #{hostname_short} ,  #{pane_current_command}}" #changes the current process for the remote hostname if connected (and the color)
+
+set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{?#{pane_ssh_connected}, , #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} |}" #shows the local path only if not connected
+
+set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #{?#{pane_ssh_connected},, #{pane_current_path}} " #shows the current full path only if not connected
+
+set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #{?#{pane_ssh_connected},#[fg=#{@thm_red}]  #U ,#[fg=#{@thm_blue}]  #U }" #shows the current or remote user, different colors for awareness
+```
+
+
 ## Installation with [Tmux Plugin Manager](https://github.com/tmux-plugins/tpm) (recommended)
+
 
 Add plugin to the list of TPM plugins in `.tmux.conf`:
 
@@ -49,7 +70,7 @@ Hit `prefix + I` to fetch the plugin and source it.
 
 Clone the repo:
 
-    $ git clone https://github.com/soyuka/tmux-current-pane-hostname ~/clone/path
+    $ git clone https://github.com/jacostag/tmux-current-pane-hostname ~/clone/path
 
 Add this line to the bottom of `.tmux.conf`:
 
