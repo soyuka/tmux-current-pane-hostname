@@ -59,7 +59,7 @@ __current_pane_command() {
 	local pid command cmd
 
 	while [[ -n "$ppid" ]] ; do
-		IFS=' ' read -r ppid pid command <<<$(ps -o ppid=,pid=,command= | grep -E "^[[:blank:]]*$ppid")
+		IFS=' ' read -r ppid pid command <<<$(ps a -o ppid=,pid=,command= | grep -E "^[[:blank:]]*$ppid")
 		[[ -z "$command" ]] && break
 		# @hack in case of ProxyJump, ssh spawns a new ssh connection to jump host as child process
 		# in that case, check if both parent and child processes are ssh, select parent one's cmd
