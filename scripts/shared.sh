@@ -76,7 +76,7 @@ __get_remote_info() {
 	# Fetch configuration with given cmd
 	# Depending of ssh version, configuration output may or may not contain `host` directive
 	# Check both `host` and `hostname` for old ssh versions compatibility and prefer `host` if exists
-	ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?\s' -e '^port\s' -e '^user\s' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
+    ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?[[:space:]]' -e '^port[[:space:]]' -e '^user[[:space:]]' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
 }
 
 __get_container_info() {
