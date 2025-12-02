@@ -82,9 +82,10 @@ __get_remote_info() {
 __get_container_info() {
 	local cmd="$1"
 
+	local container
 	local runner=${cmd%% *}
 	if [[ $cmd =~ ' --name' ]]; then
-		local container=$(echo ${cmd##* --name} | cut -f 1 -d ' ')
+		container=$(echo ${cmd##* --name} | cut -f 1 -d ' ')
 		container=${container##*=}
 	else
 		# @TODO get dynamic named container
