@@ -7,7 +7,7 @@ get_info() {
 		cmd=$(echo "$cmd" | grep -E 'ssh' | sed -E 's/^.*ssh //')
 		IFS=' ' read -r host port user <<<$(__get_remote_info "$cmd")
 	elif __containered_cmd "$cmd"; then
-		cmd=$(echo "$cmd" | grep -E 'docker|podman' | sed -E 's/^[[:blank:]]* //')
+		cmd=$(echo "$cmd" | grep -E 'docker|podman' | sed -E 's/^[[:space:]]* //')
 		IFS=' ' read -r host user <<<$(__get_container_info "$cmd")
 	else
 		IFS=' ' read -r host user <<<$(__get_local_info)
@@ -47,11 +47,11 @@ containered() {
 }
 
 __ssh_cmd() {
-	[[ $1 =~ (^|^[[:blank:]]*|/?)ssh[[:blank:]] ]] || [[ $1 =~ (^|^[[:blank:]]*|/?)sshpass[[:blank:]] ]]
+	[[ $1 =~ (^|^[[:space:]]*|/?)ssh[[:space:]] ]] || [[ $1 =~ (^|^[[:space:]]*|/?)sshpass[[:space:]] ]]
 }
 
 __containered_cmd() {
-	[[ $1 =~ (^|^[[:blank:]]*|/?)docker[[:blank:]] ]] || [[ $1 =~ (^|^[[:blank:]]*|/?)podman[[:blank:]] ]]
+	[[ $1 =~ (^|^[[:space:]]*|/?)docker[[:space:]] ]] || [[ $1 =~ (^|^[[:space:]]*|/?)podman[[:space:]] ]]
 }
 
 __current_pane_command() {
@@ -59,7 +59,7 @@ __current_pane_command() {
 	local pid command cmd
 
 	while [[ -n "$ppid" ]] ; do
-		IFS=' ' read -r ppid pid command <<<$(ps a -o ppid=,pid=,command= | grep -E "^[[:blank:]]*$ppid")
+		IFS=' ' read -r ppid pid command <<<$(ps a -o ppid=,pid=,command= | grep -E "^[[:space:]]*$ppid")
 		[[ -z "$command" ]] && break
 		# @hack in case of ProxyJump, ssh spawns a new ssh connection to jump host as child process
 		# in that case, check if both parent and child processes are ssh, select parent one's cmd
@@ -76,7 +76,7 @@ __get_remote_info() {
 	# Fetch configuration with given cmd
 	# Depending of ssh version, configuration output may or may not contain `host` directive
 	# Check both `host` and `hostname` for old ssh versions compatibility and prefer `host` if exists
-    ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?[[:space:]]' -e '^port[[:space:]]' -e '^user[[:space:]]' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
+	ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?[[:space:]]' -e '^port[[:space:]]' -e '^user[[:space:]]' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
 }
 
 __get_container_info() {
