@@ -1,6 +1,6 @@
 # Tmux current pane hostname/user
 
-Tmux plugin that enables displaying hostname and user of the current pane in your status bar.
+Tmux plugin that enables displaying hostname and user of the current pane in your status bar or pane border.
 
 > [!IMPORTANT]
 > Replaces the `#H` default format variable
@@ -65,10 +65,12 @@ Reload TMUX environment:
 ## Todo
 
 - implement templating for `#{pane_ssh_connect}`
+- implement [mosh](https://mosh.org/) support
 
 ## Limitations
 
 - only named running container may be defined, otherwise it would be ignored
+- format variables must be placed directly in `status-left`, `status-right` or `pane-border-format` options, proxy variables wouldn't work
 
 ## License
 
