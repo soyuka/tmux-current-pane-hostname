@@ -3,12 +3,12 @@
 get_info() {
 	local host port user
 	local cmd=$(__current_pane_command)
-	if __ssh_cmd "$cmd"; then
-		cmd=$(echo "$cmd" | grep -E 'ssh' | sed -E 's/^.*ssh //')
-		IFS=' ' read -r host port user <<<$(__get_ssh_info "$cmd")
-	elif __mosh_cmd "$cmd"; then
+	if __mosh_cmd "$cmd"; then
 		cmd=$(echo "$cmd" | grep -E 'mosh' | sed -E 's/^.*mosh(-client)? //')
 		IFS=' ' read -r host port user <<<$(__get_mosh_info "$cmd")
+	elif __ssh_cmd "$cmd"; then
+		cmd=$(echo "$cmd" | grep -E 'ssh' | sed -E 's/^.*ssh //')
+		IFS=' ' read -r host port user <<<$(__get_ssh_info "$cmd")
 	elif __containered_cmd "$cmd"; then
 		cmd=$(echo "$cmd" | grep -E 'docker|podman' | sed -E 's/^[[:space:]]* //')
 		IFS=' ' read -r host user <<<$(__get_container_info "$cmd")
@@ -91,12 +91,7 @@ __get_ssh_info() {
 	ssh -TGN $cmd 2>/dev/null | grep -E -e '^host(name)?[[:space:]]' -e '^port[[:space:]]' -e '^user[[:space:]]' | sort --unique --key 1,1.4 | cut -f 2 -d ' ' | xargs
 }
 
-# @see https://github.com/mobile-shell/mosh/blob/master/scripts/mosh.pl#L465
 __get_mosh_info() {
-	# @TODO remove after mosh support fully works
-	__get_ssh_info
-	return
-
 	local cmd="$1"
 
 	# @see https://tldp.org/LDP/abs/html/parameter-substitution.html
@@ -105,29 +100,44 @@ __get_mosh_info() {
 	# @see https://github.com/mobile-shell/mosh/blob/1105d481bb9143dad43adf768f58da7b029fd39c/scripts/mosh.pl#L465
 	# ip and port placed after pipe separator in cmd
 	local ip port
-	IFS=' ' read -r ip port <<<"${cmd#*|*([[:blank:]])}"
+	IFS=' ' read -r ip port <<<"${cmd#*|*([[:space:]])}"
 
 	# Clean cmd from ip-port...
-	cmd="${cmd%%*([[:blank:]])|*}"
+	cmd="${cmd%%*([[:space:]])|*}"
 	# ...and sanitize from leading #
-	cmd="${cmd##*-#*([[:blank:]])}"
+	cmd="${cmd##*-#*([[:space:]])}"
 
-	# Fetch initial ssh command
-	local ssh
-	ssh="${cmd%%[[:blank:]]*}"
+	# @TODO fetch target
+	# here we may have a lot of variants of mosh's cmdline, like
+	#   TARGET
+	#   TARGET --port 60006
+	#   --ssh /usr/bin/ssh -o User=root TARGET --port 60006
+	#   TARGET --ssh /usr/bin/ssh -o User=root --port 60006
+	#   --ssh /usr/bin/ssh -o User=root --port 60006 TARGET
+	#   etc.
+	# @warn the problem is - how to detect TARGET on any position inside cmdline
+	# @note cmdline doesn't contain any quotes
+	# @note mosh's flags may or may not contain '=' between flag's name and it's value
+	# @note value of ssh flag also may or may not contain '=' in it's value
+	local target
+	# Remove target from cmd to prevent duplications
+	cmd="${cmd//[[:space:]]$target[[:space:]]/ }"
 
-	# Fetch extra ssh options
-	local ssh_options
-	if [[ $cmd =~ '--ssh' ]]; then
-		ssh_options="${cmd##**([[:blank:]])--ssh*([[:blank:]])?(=)}"
-		# @hack ssh has no long flags, so `--` means mosh's flag
-		ssh_options="${ssh_options%%*([[:blank:]])--*}"
-		# First word is ssh binary
-		ssh_options="${ssh_options#*[[:blank:]]}"
-	fi
+	# @hack ssh has no long flags, so `--` means mosh's flag
+	# @warn this must be changed if ssh would provide long flags
+	local cmd_args ssh_options
+	IFS='#' read -r -a cmd_args <<<"${cmd//--/#}"
+	for arg in "${cmd_args[@]}"; do
+		if [[ $arg =~ ^ssh ]]; then
+			# Clean `ssh` flag name...
+			ssh_options="${arg#ssh[[:space:]|=]}"
+			# ...and ssh binary from arg
+			ssh_options="${ssh_options#*[[:space:]]}"
+		fi
+	done
 
 	local host user
-	IFS=' ' read -r host _ user <<<$(__get_ssh_info "$ssh_options $ssh")
+	IFS=' ' read -r host _ user <<<$(__get_ssh_info "${ssh_options} ${target:-$ip}")
 	echo "${host:-$ip} $port $user"
 }
 
